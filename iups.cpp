@@ -2,11 +2,10 @@
 #define IUPS_C
 
 #include <cstdio>
-#include <string>
 #include "iups.hpp"
 #include "c_text.hpp"
 
-using std::string;
+
 
 void IupSOpen(int* argc, char** argv[])
 {
@@ -14,27 +13,27 @@ void IupSOpen(int* argc, char** argv[])
     IupGLCanvasOpen();                          /* enable the use of OpenGL to draw in canvas (iupgl.lib opengl32.lib) */
 }
 
-string IupSelectFile(string title, string ext, string tip)
+const char* IupSelectFile(const char* title, const char* ext, const char* tip)
 {
     Ihandle* getfile = IupFileDlg();
-    string filename = NULL;
+    const char* filename = NULL;
 
-    IupSetAttribute(getfile, IUP_TITLE, title.c_str());
+    IupSetAttribute(getfile, IUP_TITLE, title);
     IupSetAttribute(getfile, IUP_DIALOGTYPE, IUP_OPEN);
-    IupSetAttribute(getfile, IUP_FILTER, ext.c_str());
-    IupSetAttribute(getfile, IUP_FILTERINFO, tip.c_str());
+    IupSetAttribute(getfile, IUP_FILTER, ext);
+    IupSetAttribute(getfile, IUP_FILTERINFO, tip);
     IupPopup(getfile, IUP_CENTER, IUP_CENTER);
 
     filename = IupGetAttribute(getfile, IUP_VALUE);
     return filename;
 }
 
-Ihandle* IupSDialog(string title, Ihandle* content, Icallback exit_cb, string resize)
+Ihandle* IupSDialog(const char* title, Ihandle* content, Icallback exit_cb, const char* resize)
 {
     Ihandle* dialog = IupDialog(content);
-    IupSetAttribute(dialog, "TITLE", title.c_str());
+    IupSetAttribute(dialog, "TITLE", title);
     IupSetAttribute(dialog, "CLOSE_CB", "exit_cb");
-    IupSetAttribute(dialog, "RESIZE", resize.c_str());
+    IupSetAttribute(dialog, "RESIZE", resize);
     IupSetFunction("exit_cb", (Icallback) exit_cb);
     return dialog;
 }
@@ -50,11 +49,11 @@ void IupCanvasResize(Ihandle* canvas, Ihandle* parent_dialog, int new_width, int
 }
 
 
-Ihandle* IupSButton(string image_file, string tip, Icallback callback)
+Ihandle* IupSButton(const char* image_file, const char* tip, Icallback callback)
 {
     Ihandle* button = IupButton(NULL, NULL);
-    IupSetAttribute(button, "IMAGE", image_file.c_str());
-    IupSetAttribute(button, "TIP", tip.c_str());
+    IupSetAttribute(button, "IMAGE", image_file);
+    IupSetAttribute(button, "TIP", tip);
     IupSetCallback(button, "ACTION", callback);
 
     return button;
@@ -75,9 +74,9 @@ Ihandle* IupSGLCanvas(int width, int height, Icallback repaint_cb, Icallback res
 }
 
 
-Ihandle* IupSMessageBar(string initial_message, int height)
+Ihandle* IupSMessageBar(const char* initial_message, int height)
 {
-    Ihandle* msgbar = IupLabel(initial_message.c_str());       /* label as a msg bar */
+    Ihandle* msgbar = IupLabel(initial_message);       /* label as a msg bar */
     IupSetfAttribute(msgbar, IUP_RASTERSIZE, "x%d", height);     /* define height in pixels */
     IupSetAttribute(msgbar, "EXPAND", "HORIZONTAL");
 

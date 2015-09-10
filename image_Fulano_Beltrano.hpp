@@ -59,14 +59,14 @@ typedef struct Image_imp Image;
  *
  *	@return Handle da imagem criada.
  */
-Image *imgCreate(int w, int h, int dcs);
+Image* imgCreate(int w, int h, int dcs);
 
 /**
  *	Destroi a imagem.
  *
  *	@param image imagem a ser destruida.
  */
-void imgDestroy(Image *image);
+void imgDestroy(Image* image);
 
 /**
  *	Cria uma nova nova copia imagem dada.
@@ -75,7 +75,7 @@ void imgDestroy(Image *image);
  *
  *	@return Handle da imagem criada.
  */
-Image *imgCopy(Image *image);
+Image* imgCopy(Image* image);
 
 /**
  *	Cria uma nova nova copia imagem dada em tons de cinza.
@@ -84,7 +84,7 @@ Image *imgCopy(Image *image);
  *
  *	@return Handle da imagem criada.
  */
-Image *imgGrey(Image *image);
+Image* imgGrey(Image* image);
 
 /**
  *	Obtem a largura (width) de uma imagem.
@@ -92,7 +92,7 @@ Image *imgGrey(Image *image);
  *	@param image Handle para uma imagem.
  *	@return  a largura em pixels (width) da imagem.
  */
-int imgGetWidth(Image *image);
+int imgGetWidth(Image* image);
 
 /**
  *	Obtem a altura (heigth) de uma imagem.
@@ -100,7 +100,7 @@ int imgGetWidth(Image *image);
  *	@param image Handle para uma imagem.
  *	@return  a altura em pixels (height) da imagem.
  */
-int imgGetHeight(Image *image);
+int imgGetHeight(Image* image);
 
 /**
  *	Obtem a dimensao do espaco de cor de cada pixel (1=lminancia ou 3=RGB).
@@ -109,7 +109,7 @@ int imgGetHeight(Image *image);
  *	@return  dimensao do espaco de cor de cada pixel (1=lminancia ou 3=RGB) da imagem.
  */
 
-int imgGetDimColorSpace(Image *image);
+int imgGetDimColorSpace(Image* image);
 
 /**
  *	Obtem as dimensoes de uma imagem.
@@ -118,7 +118,7 @@ int imgGetDimColorSpace(Image *image);
  *	@param w [out]Retorna a largura da imagem.
  *	@param h [out]Retorna a altura da imagem.
  */
-float *imgGetData(Image *image);
+float* imgGetData(Image* image);
 
 /**
  *	Ajusta o pixel de uma imagem com a cor especificada.
@@ -128,9 +128,9 @@ float *imgGetData(Image *image);
  *	@param y Posicao y na imagem.
  *	@param color Cor do pixel(valor em float [0,1]).
  */
-void imgSetPixel3fv(Image *image, int x, int y, float *color);
+void imgSetPixel3fv(Image* image, int x, int y, float* color);
 
-void imgSetPixel3f(Image *image, int x, int y, float R, float G, float B);
+void imgSetPixel3f(Image* image, int x, int y, float R, float G, float B);
 
 /**
  *	Ajusta o pixel de uma imagem com a cor especificada.
@@ -140,7 +140,7 @@ void imgSetPixel3f(Image *image, int x, int y, float R, float G, float B);
  *	@param y Posicao y na imagem.
  *	@param color Cor do pixel (valor em unsigend char[0,255]).
  */
-void imgSetPixel3ubv(Image *image, int x, int y, unsigned char *color);
+void imgSetPixel3ubv(Image* image, int x, int y, unsigned const char* color);
 
 /**
  *	Obtem o pixel de uma imagem na posicao especificada.
@@ -150,9 +150,9 @@ void imgSetPixel3ubv(Image *image, int x, int y, unsigned char *color);
  *	@param y Posicao y na imagem.
  *	@param color [out] Pixel da posicao especificada(valor em float [0,1]).
  */
-void imgGetPixel3fv(Image *image, int x, int y, float *color);
+void imgGetPixel3fv(Image* image, int x, int y, float* color);
 
-void imgGetPixel3f(Image *image, int x, int y, float *R, float *G, float *B);
+void imgGetPixel3f(Image* image, int x, int y, float* R, float* G, float* B);
 
 /**
  *	Obtem o pixel de uma imagem na posicao especificada.
@@ -162,7 +162,7 @@ void imgGetPixel3f(Image *image, int x, int y, float *R, float *G, float *B);
  *	@param y Posicao y na imagem.
  *	@param color [out] Pixel da posicao especificada (valor em unsigend char[0,255]).
  */
-void imgGetPixel3ubv(Image *image, int x, int y, unsigned char *color);
+void imgGetPixel3ubv(Image* image, int x, int y, unsigned const char* color);
 
 
 /**
@@ -173,7 +173,7 @@ void imgGetPixel3ubv(Image *image, int x, int y, unsigned char *color);
  *
  *	@return retorna 1 caso nao haja erros.
  */
-int imgWriteBMP(char *filename, Image *bmp);
+int imgWriteBMP(const char* filename, Image* bmp);
 
 /**
  *	Le a imagem a partir do arquivo especificado.
@@ -182,7 +182,7 @@ int imgWriteBMP(char *filename, Image *bmp);
  *
  *	@return imagem criada.
  */
-Image *imgReadBMP(char *filename);
+Image* imgReadBMP(const char* filename);
 
 
 /**
@@ -194,7 +194,7 @@ Image *imgReadBMP(char *filename);
  *
  *	@return imagem criada.
  */
-Image *imgReadPFM(char *filename);
+Image* imgReadPFM(const char* filename);
 
 /**
  *	Salva a imagem no arquivo especificado .
@@ -204,7 +204,7 @@ Image *imgReadPFM(char *filename);
  *
  *	@return retorna 1 caso nao haja erros.
  */
-int imgWritePFM(char *filename, Image *image);
+int imgWritePFM(const char* filename, Image* image);
 
 
 /**
@@ -214,7 +214,7 @@ int imgWritePFM(char *filename, Image *image);
  *	@param w Nova largura da imagem.
  *	@param h Nova altura da imagem.
  */
-int imgCountColor(Image *image, float);
+int imgCountColor(Image* image, float);
 
 /**
  *	 Aplica o filtro de Gauss para eliminar o ruido branco
@@ -223,7 +223,7 @@ int imgCountColor(Image *image, float);
  *	@param image Handle para uma imagem a ser filtrada.
  *
  */
-void imgGauss(Image *img_dst, Image *img_src);
+void imgGauss(Image* img_dst, Image* img_src);
 
 /**
  *	 Aplica o filtro de Mediana para eliminar o ruido sal e pimenta
@@ -232,7 +232,7 @@ void imgGauss(Image *img_dst, Image *img_src);
  *	@param image Handle para uma imagem a ser filtrada.
  *
  */
-void imgMedian(Image *image);
+void imgMedian(Image* image);
 
 /**
  *	 Calcula uma imagem com pixels nas arestas 
@@ -242,7 +242,7 @@ void imgMedian(Image *image);
  *
  * @return Handle para a image de luminosidade onde o branco destaca as arestas.
  */
-Image *imgEdges(Image *image);
+Image* imgEdges(Image* image);
 
 
 /**
@@ -253,7 +253,7 @@ Image *imgEdges(Image *image);
 *
 *   @return Handle para a image de luminosidade com dois tons 0 e 1 (B&W).
 **/
-Image *imgBinary(Image *img_cgrey);
+Image* imgBinary(Image* img_cgrey);
 
 
 #endif

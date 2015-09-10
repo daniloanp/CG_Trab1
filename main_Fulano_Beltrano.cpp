@@ -136,23 +136,23 @@ static string strip_path_from_filename(string file_name)
 
 int load_cb(void)
 {
-    string file_name = IupSelectFile(C_TEXT("File Selection"),C_TEXT("*.bmp"), C_TEXT("Load a BMP file"));
-    if (file_name.empty()) {
-        IupSetfAttribute(gc.msgbar, "TITLE", C_TEXT("Selection failed"));
+    const char* file_name = IupSelectFile("File Selection","*.bmp", "Load a BMP file");
+    if (!file_name) {
+        IupSetfAttribute(gc.msgbar, "TITLE", "Selection failed");
         return IUP_DEFAULT;
     }
 
     if (gc.image != NULL) { imgDestroy(gc.image); }
 
-    gc.image = imgReadBMP((char*) file_name.c_str());  /* loads the image */
+    gc.image = imgReadBMP(file_name);  /* loads the image */
     if (gc.image != NULL) {
         gc.width = imgGetWidth(gc.image);
         gc.height = imgGetHeight(gc.image);
         IupCanvasResize(gc.canvas, gc.dialog, gc.width, gc.height);
         repaint_cb(gc.canvas);
-        IupSetfAttribute(gc.msgbar, "TITLE", C_TEXT("%s"), strip_path_from_filename(file_name));
+        IupSetfAttribute(gc.msgbar, "TITLE", "%s", strip_path_from_filename(file_name));
     } else {
-        IupSetfAttribute(gc.msgbar, "TITLE", C_TEXT("Can't open %s"), strip_path_from_filename(file_name));
+        IupSetfAttribute(gc.msgbar, "TITLE", "Can't open %s", strip_path_from_filename(file_name));
     }
 
     return IUP_DEFAULT;
@@ -162,7 +162,7 @@ int binary_cb(void)
 {
     Image* tmp = gc.image;
     if (tmp != NULL) {
-        IupSetfAttribute(gc.msgbar, "TITLE", C_TEXT("Grey scale image ..."));
+        IupSetfAttribute(gc.msgbar, "TITLE", "Grey scale image ...");
         gc.image = imgGrey(tmp);
         repaint_cb(gc.canvas);   /* repaint canvas */
         imgDestroy(tmp);
@@ -170,14 +170,14 @@ int binary_cb(void)
         gc.image = imgBinary(tmp);
         repaint_cb(gc.canvas);   /* repaint canvas */
         imgDestroy(tmp);
-        IupSetfAttribute(gc.msgbar, "TITLE", C_TEXT("Grey scale image ..."));
+        IupSetfAttribute(gc.msgbar, "TITLE", "Grey scale image ...");
     }
     return IUP_DEFAULT;
 }
 
 int erode_cb(void)
 {
-    IupSetfAttribute(gc.msgbar, "TITLE", C_TEXT("Erode call back"));
+    IupSetfAttribute(gc.msgbar, "TITLE", "Erode call back");
     repaint_cb(gc.canvas);   /* repaint canvas */
     return IUP_DEFAULT;
 }
@@ -218,8 +218,8 @@ Ihandle* InitToolbar(void)
     Ihandle* toolbar;
 
     /* Create four buttons */
-    Ihandle* load = IupSButton("img/file_open.bmp", "load a BMP image file", (Icallback) load_cb);
-    Ihandle* binary = IupSButton("img/binary.bmp","convert RGB to binary image callback function",
+    Ihandle* load = IupSButton("./img/file_open.bmp", "load a BMP image file", (Icallback) load_cb);
+    Ihandle* binary = IupSButton("./img/binary.bmp","convert RGB to binary image callback function",
                                  (Icallback) binary_cb);
     Ihandle* erode = IupSButton("img/erode.bmp", "Write your tip here...", (Icallback) erode_cb);
     Ihandle* dilate = IupSButton("img/dilate.bmp", "Write your tip here...", (Icallback) dilate_cb);
