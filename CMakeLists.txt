@@ -16,6 +16,10 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 aux_source_directory(. SRC_LIST)
 add_executable(CG_Trab1 ${SRC_LIST})
 
+add_custom_command(TARGET CG_Trab1 PRE_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_directory
+        ${CMAKE_SOURCE_DIR}/img $<TARGET_FILE_DIR:CG_Trab1>/img)
+
 target_link_libraries(
         ${PROJECT_NAME}
         ${IUPGL_LIBRARY}

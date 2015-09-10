@@ -4,6 +4,7 @@
 #include <cstdio>
 #include <string>
 #include "iups.hpp"
+#include "c_text.hpp"
 
 using std::string;
 

@@ -43,6 +43,7 @@
 
 
 #include "image_Fulano_Beltrano.hpp"
+#include "c_text.hpp"
 
 #define ROUND(_) (int)floor( (_) + 0.5 )
 #define N_CORES   256
