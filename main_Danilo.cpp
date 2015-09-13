@@ -1,3 +1,6 @@
+#ifndef MAIN_DANILO
+#define MAIN_DANILO
+
 /**
  *  @file IUPGL_image.c Simple example of use of OpenGL and IUP to for image processing (Paint) programs.
  * 
@@ -42,7 +45,7 @@
 #include <GL/gl.h>     /* OpenGL functions*/
 #include <GL/glu.h>    /* OpenGL utilitary functions*/
 
-#include "image_Fulano_Beltrano.hpp"
+#include "image_Danilo.hpp"
 #include "c_text.hpp"
 
 
@@ -263,4 +266,8 @@ int main(int argc, char* argv[])
 
     IupClose();                           /* closes the IUP lib */
 }
+
+#endif
+
+
 

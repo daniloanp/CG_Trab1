@@ -43,7 +43,7 @@
 #include <cmath>
 
 
-#include "image_Fulano_Beltrano.hpp"
+#include "image_Danilo.hpp"
 #include "c_text.hpp"
 
 #define ROUND(_) (int)floor( (_) + 0.5 )

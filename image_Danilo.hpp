@@ -1,7 +1,8 @@
 /*  Departamento de Informatica, PUC-Rio, INF1761 Computer Graphhics
 *    
 *   @file image.h TAD: digital image (interface).
-*   @author Marcelo Gattass and others
+*   @original_author Marcelo Gattass and others
+*   @changed by Danilo Pereira
 *
 *   @date
 *         Last version:     08/2015.
