@@ -36,7 +36,8 @@
 #ifndef IMAGE_H
 #define IMAGE_H
 
-
+namespace image
+{
 /************************************************************************/
 /* Tipos Exportados                                                     */
 /************************************************************************/
@@ -44,217 +45,178 @@
  *   Imagem com um buffer rgb.
  */
 
-typedef struct Image_imp Image;
+    class Image
+    {
+    private:
+        unsigned long BufferSize();
+
+    public:
+        Image(unsigned int w, unsigned int h, unsigned int dcs);
+
+        ~Image();
+
+        unsigned int dcs;
+        /* define a dim do espaco de cor (dimension of the color space): 3=RGB, 1=luminancia */
+        unsigned int width;
+        /* numero de pixels na direcao horizontal da imagem */
+        unsigned int height;
+        /* numero de pixels na direcao vertical da imagem   */
+        float* buf;      /* vetor de dimensao dcs*width*height que armazena consecutivamente as componentes de cor */
+        /* de cada pixel a partir do canto inferior esquerdo da imagem.  */
+        /* A posicao das componentes de cor do pixel (x,y) fica armazenada */
+        /* a partir da posicao: (y*width*dcs) + (x*dcs)  */
+
+
+        int GetWidth();
+
+        int GetHeight();
+
+        int GetDimColorSpace();
+
+        float* GetData();
+
+        /**
+         *	Cria uma nova nova copia imagem dada.
+         *
+         *	@return Handle da imagem criada.
+         */
+        Image* Copy();
+
+        /**
+         *	Cria uma nova nova copia imagem dada em tons de cinza.
+         *
+         *	@return Handle da imagem criada.
+         */
+        Image* GreyCopy();
+
+        Image* ResizedCopy(int w1, int h1);
+
+        /**
+         *	Le a imagem a partir do arquivo especificado.
+         *
+         *	@return imagem criada.
+         */
+        static Image* ReadBMP(const char* filename);
+
+        /**
+         *	Salva a imagem no arquivo especificado em formato BMP.
+         *
+         *	@param filename Nome do arquivo de imagem.
+         *
+         *	@return retorna 1 caso nao haja erros.
+         */
+        int WriteBMP(char* filename);
+
+
+        /**
+         *	Salva a imagem no arquivo especificado .
+         *
+         *	@param filename Nome do arquivo de imagem.
+         *	@param image Handle para uma imagem.
+         *
+         *	@return retorna 1 caso nao haja erros.
+         */
+        int WritePFM(char* filename);
+
+
+        /**
+         *	Le a imagem a partir do arquivo especificado.
+         *  A imagem e' armazenada como um arquivo binario
+         *  onde os tres campos da .
+         *
+         *	@param filename Nome do arquivo de imagem.
+         *
+         *	@return imagem criada.
+         */
+        static Image* ReadPFM(char* filename);
+
+        /**
+         *	Conta o numero de cores diferentes na imagem
+         *
+         *	@param w Nova largura da imagem.
+         *	@param h Nova altura da imagem.
+         */
+        int CountColor(float tol);
+
+        /**
+         *	 Aplica o filtro de Mediana para eliminar o ruido sal e pimenta
+         *  da imagem.
+         *
+         */
+        void Median();
+
+        /**
+         *	Ajusta o pixel de uma imagem com a cor especificada.
+         *
+         *	@param x Posicao x na imagem.
+         *	@param y Posicao y na imagem.
+         *	@param color Cor do pixel(valor em float [0,1]).
+         */
+        void SetPixel3fv(int x, int y, float* color);
+
+        void SetPixel3f(int x, int y, float R, float G, float B);
+
+        /**
+         *	Ajusta o pixel de uma imagem com a cor especificada.
+         *
+         *	@param x Posicao x na imagem.
+         *	@param y Posicao y na imagem.
+         *	@param color Cor do pixel (valor em unsigend char[0,255]).
+         */
+        void SetPixel3ubv(int x, int y, unsigned char* color);
+
+
+        /**
+         *	Obtem o pixel de uma imagem na posicao especificada.
+         *
+         *	@param x Posicao x na imagem.
+         *	@param y Posicao y na imagem.
+         *	@param color [out] Pixel da posicao especificada(valor em float [0,1]).
+         */
+        void GetPixel3fv(int x, int y, float* color);
+
+        void GetPixel3f(int x, int y, float* R, float* G, float* B);
+
+
+        /**
+         *	Obtem o pixel de uma imagem na posicao especificada.
+         *
+         *	@param x Posicao x na imagem.
+         *	@param y Posicao y na imagem.
+         *	@param color [out] Pixel da posicao especificada (valor em unsigend char[0,255]).
+         */
+
+        void GetPixel3ubv(int x, int y, unsigned char* color);
+
+        /**
+        *	Reduz a imagem em tons de cinza para 2 tons (B&W ou Preto e Branco).
+        *
+        *   @return Handle para a image de luminosidade com dois tons 0 e 1 (B&W).
+        **/
+        Image* Binary();
+
+        /**
+         *	 Calcula uma imagem com pixels nas arestas
+         *  da imagem dada.
+         *
+         *  @return Handle para a image de luminosidade onde o branco destaca as arestas.
+         */
+        Image* Edges();
+    };
 
 
 /************************************************************************/
 /* Funcoes Exportadas                                                   */
-/************************************************************************/
 
-/**
- *	Cria uma nova imagem com as dimensoes especificadas.
- *
- *	@param w Largura da imagem.
- *	@param h Altura da imagem.
- *	@param dcs Dimensao do espaco de cor de cada pixel (1=luminancia ou 3=RGB).
- *
- *	@return Handle da imagem criada.
- */
-Image* imgCreate(int w, int h, int dcs);
-
-/**
- *	Destroi a imagem.
- *
- *	@param image imagem a ser destruida.
- */
-void imgDestroy(Image* image);
-
-/**
- *	Cria uma nova nova copia imagem dada.
- *
- *	@param image imagem a ser copiada.
- *
- *	@return Handle da imagem criada.
- */
-Image* imgCopy(Image* image);
-
-/**
- *	Cria uma nova nova copia imagem dada em tons de cinza.
- *
- *	@param image imagem a ser copiada em tons de cinza.
- *
- *	@return Handle da imagem criada.
- */
-Image* imgGrey(Image* image);
-
-/**
- *	Obtem a largura (width) de uma imagem.
- *
- *	@param image Handle para uma imagem.
- *	@return  a largura em pixels (width) da imagem.
- */
-int imgGetWidth(Image* image);
-
-/**
- *	Obtem a altura (heigth) de uma imagem.
- *
- *	@param image Handle para uma imagem.
- *	@return  a altura em pixels (height) da imagem.
- */
-int imgGetHeight(Image* image);
-
-/**
- *	Obtem a dimensao do espaco de cor de cada pixel (1=lminancia ou 3=RGB).
- *
- *	@param image Handle para uma imagem.
- *	@return  dimensao do espaco de cor de cada pixel (1=lminancia ou 3=RGB) da imagem.
- */
-
-int imgGetDimColorSpace(Image* image);
-
-/**
- *	Obtem as dimensoes de uma imagem.
- *
- *	@param image Handle para uma imagem.
- *	@param w [out]Retorna a largura da imagem.
- *	@param h [out]Retorna a altura da imagem.
- */
-float* imgGetData(Image* image);
-
-/**
- *	Ajusta o pixel de uma imagem com a cor especificada.
- *
- *	@param image Handle para uma imagem.
- *	@param x Posicao x na imagem.
- *	@param y Posicao y na imagem.
- *	@param color Cor do pixel(valor em float [0,1]).
- */
-void imgSetPixel3fv(Image* image, int x, int y, float* color);
-
-void imgSetPixel3f(Image* image, int x, int y, float R, float G, float B);
-
-/**
- *	Ajusta o pixel de uma imagem com a cor especificada.
- *
- *	@param image Handle para uma imagem.
- *	@param x Posicao x na imagem.
- *	@param y Posicao y na imagem.
- *	@param color Cor do pixel (valor em unsigend char[0,255]).
- */
-void imgSetPixel3ubv(Image* image, int x, int y, unsigned const char* color);
-
-/**
- *	Obtem o pixel de uma imagem na posicao especificada.
- *
- *	@param image Handle para uma imagem.
- *	@param x Posicao x na imagem.
- *	@param y Posicao y na imagem.
- *	@param color [out] Pixel da posicao especificada(valor em float [0,1]).
- */
-void imgGetPixel3fv(Image* image, int x, int y, float* color);
-
-void imgGetPixel3f(Image* image, int x, int y, float* R, float* G, float* B);
-
-/**
- *	Obtem o pixel de uma imagem na posicao especificada.
- *
- *	@param image Handle para uma imagem.
- *	@param x Posicao x na imagem.
- *	@param y Posicao y na imagem.
- *	@param color [out] Pixel da posicao especificada (valor em unsigend char[0,255]).
- */
-void imgGetPixel3ubv(Image* image, int x, int y, unsigned const char* color);
-
-
-/**
- *	Salva a imagem no arquivo especificado em formato BMP.
- *
- *	@param filename Nome do arquivo de imagem.
- *	@param bmp Handle para uma imagem.
- *
- *	@return retorna 1 caso nao haja erros.
- */
-int imgWriteBMP(const char* filename, Image* bmp);
-
-/**
- *	Le a imagem a partir do arquivo especificado.
- *
- *	@param filename Nome do arquivo de imagem.
- *
- *	@return imagem criada.
- */
-Image* imgReadBMP(const char* filename);
-
-
-/**
- *	Le a imagem a partir do arquivo especificado.
- *  A imagem e' armazenada como um arquivo binario
- *  onde os tres campos da .
- *
- *	@param filename Nome do arquivo de imagem.
- *
- *	@return imagem criada.
- */
-Image* imgReadPFM(const char* filename);
-
-/**
- *	Salva a imagem no arquivo especificado .
- *
- *	@param filename Nome do arquivo de imagem.
- *	@param image Handle para uma imagem.
- *
- *	@return retorna 1 caso nao haja erros.
- */
-int imgWritePFM(const char* filename, Image* image);
-
-
-/**
- *	Conta o numero de cores diferentes na imagem
- *
- *	@param image Handle para uma imagem.
- *	@param w Nova largura da imagem.
- *	@param h Nova altura da imagem.
- */
-int imgCountColor(Image* image, float);
-
-/**
+    /**
  *	 Aplica o filtro de Gauss para eliminar o ruido branco
  *  da imagem.
  *
  *	@param image Handle para uma imagem a ser filtrada.
  *
  */
-void imgGauss(Image* img_dst, Image* img_src);
-
-/**
- *	 Aplica o filtro de Mediana para eliminar o ruido sal e pimenta
- *  da imagem.
- *
- *	@param image Handle para uma imagem a ser filtrada.
- *
- */
-void imgMedian(Image* image);
-
-/**
- *	 Calcula uma imagem com pixels nas arestas 
- *  da imagem dada.
- *
- *	@param image Handle para uma imagem.
- *
- * @return Handle para a image de luminosidade onde o branco destaca as arestas.
- */
-Image* imgEdges(Image* image);
-
-
-/**
-*	Reduz a imagem em tons de cinza para 2 tons (B&W ou Preto e Branco). 
-*
-*
-*	@param img_grey    Handle para uma imagem em tons de cinza.
-*
-*   @return Handle para a image de luminosidade com dois tons 0 e 1 (B&W).
-**/
-Image* imgBinary(Image* img_cgrey);
+    void imgGauss(Image* img_dst, Image* img_src);
+}
 
 
 #endif

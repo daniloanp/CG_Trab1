@@ -39,17 +39,16 @@
 #include <cstdlib>
 #include <string>
 
-#include "iups.hpp"
-
-
 #include <GL/gl.h>     /* OpenGL functions*/
 #include <GL/glu.h>    /* OpenGL utilitary functions*/
 
+#include "iups_Danilo.hpp"
 #include "image_Danilo.hpp"
-#include "c_text.hpp"
 
 
 using std::string;
+using namespace iups;
+using namespace image;
 
 /*- Program context variables(declared as globals to facilitate the comunication in the callback model)-----------*/
 struct global_context
@@ -82,14 +81,14 @@ int repaint_cb(Ihandle* self)
     glClear(GL_COLOR_BUFFER_BIT);          /* clear the color buffer */
 
     if (gc.image != NULL) {
-        int h = imgGetHeight(gc.image);
-        int w = imgGetWidth(gc.image);
+        int height = gc.image->GetHeight();
+        int width = gc.image->GetWidth();
         /* assing to each pixel of the canvas the color of the corresponding pixel in the image */
         glBegin(GL_POINTS);
-        for (y = 0; y < h; y++) {
-            for (x = 0; x < w; x++) {
+        for (y = 0; y < height; y++) {
+            for (x = 0; x < width; x++) {
                 float r, g, b;
-                imgGetPixel3f(gc.image, x, y, &r, &g, &b); /* gets the RGB value the pixel (x,y) */
+                gc.image->GetPixel3f(x, y, &r, &g, &b); /* gets the RGB value the pixel (x,y) */
                 glColor3f(r, g, b);        /* define a current color in OpenGL */
                 glVertex2i(x, y);         /* paint the pixel */
             }
@@ -133,24 +132,26 @@ static string strip_path_from_filename(string file_name)
 //    while (*p != '\0') { p++; } /* go to the end of string */
 //    while ((p > file_name) && (*p != '\\')) { p--; }  /* return up to '\' */
 //    return (*p == '\\') ? p + 1 : p;
-    int last_bar = file_name.find_last_of('\\');
+    unsigned long last_bar = file_name.find_last_of('\\');
     return file_name.substr(0, last_bar + 1);
 }
 
 int load_cb(void)
 {
-    const char* file_name = IupSelectFile("File Selection","*.bmp", "Load a BMP file");
+    const char* file_name = IupSelectFile("File Selection", "*.bmp", "Load a BMP file");
     if (!file_name) {
         IupSetfAttribute(gc.msgbar, "TITLE", "Selection failed");
         return IUP_DEFAULT;
     }
 
-    if (gc.image != NULL) { imgDestroy(gc.image); }
-
-    gc.image = imgReadBMP(file_name);  /* loads the image */
     if (gc.image != NULL) {
-        gc.width = imgGetWidth(gc.image);
-        gc.height = imgGetHeight(gc.image);
+        delete gc.image;
+    }
+
+    gc.image = Image::ReadBMP(file_name);  /* loads the image */
+    if (gc.image != NULL) {
+        gc.width = gc.image->GetWidth();
+        gc.height = gc.image->GetHeight();
         IupCanvasResize(gc.canvas, gc.dialog, gc.width, gc.height);
         repaint_cb(gc.canvas);
         IupSetfAttribute(gc.msgbar, "TITLE", "%s", strip_path_from_filename(file_name));
@@ -166,13 +167,13 @@ int binary_cb(void)
     Image* tmp = gc.image;
     if (tmp != NULL) {
         IupSetfAttribute(gc.msgbar, "TITLE", "Grey scale image ...");
-        gc.image = imgGrey(tmp);
+        gc.image = tmp->GreyCopy();
         repaint_cb(gc.canvas);   /* repaint canvas */
-        imgDestroy(tmp);
+        delete tmp;
         tmp = gc.image;
-        gc.image = imgBinary(tmp);
+        gc.image = tmp->Binary();
         repaint_cb(gc.canvas);   /* repaint canvas */
-        imgDestroy(tmp);
+        delete tmp;
         IupSetfAttribute(gc.msgbar, "TITLE", "Grey scale image ...");
     }
     return IUP_DEFAULT;
@@ -222,7 +223,7 @@ Ihandle* InitToolbar(void)
 
     /* Create four buttons */
     Ihandle* load = IupSButton("./img/file_open.bmp", "load a BMP image file", (Icallback) load_cb);
-    Ihandle* binary = IupSButton("./img/binary.bmp","convert RGB to binary image callback function",
+    Ihandle* binary = IupSButton("./img/binary.bmp", "convert RGB to binary image callback function",
                                  (Icallback) binary_cb);
     Ihandle* erode = IupSButton("img/erode.bmp", "Write your tip here...", (Icallback) erode_cb);
     Ihandle* dilate = IupSButton("img/dilate.bmp", "Write your tip here...", (Icallback) dilate_cb);
@@ -265,6 +266,7 @@ int main(int argc, char* argv[])
     IupMainLoop();                        /* handle the program control to the IUP lib until a return IUP_CLOSE */
 
     IupClose();                           /* closes the IUP lib */
+    return 0;
 }
 
 #endif
