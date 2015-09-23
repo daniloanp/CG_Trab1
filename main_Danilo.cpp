@@ -184,7 +184,7 @@ int erode_cb(void)
     IupSetfAttribute(gc.msgbar, "TITLE", "Erode image...");
     Image* tmp = gc.image;
     if (tmp != NULL) {
-        gc.image = tmp->GreyCopy();
+        gc.image = tmp->Erosion();
         delete tmp;
     }
 
