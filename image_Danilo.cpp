@@ -41,7 +41,7 @@
 #include <cstdio>
 #include <cassert>
 #include <cmath>
-#include <id3/globals.h>
+
 
 
 #include "image_Danilo.hpp"
@@ -1189,3 +1189,19 @@ in middle position, but other elements are NOT sorted.
 
 
 
+/*
+ *
+ *
+ *
+ * smin = 255;
+for(j = -2; j <= 2; j++){
+for(i = -2; i <= 2; i++){
+if(MASK[i+2][j+2] == 1){
+if(IMAGE[x+i][y+j] < smin)
+smin = IMAGE[x+j][y+j];
+}
+}
+    FILTER[x][y] = smin;
+}
+ *
+ */
