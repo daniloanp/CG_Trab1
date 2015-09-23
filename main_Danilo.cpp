@@ -174,14 +174,20 @@ int binary_cb(void)
         gc.image = tmp->Binary();
         repaint_cb(gc.canvas);   /* repaint canvas */
         delete tmp;
-        IupSetfAttribute(gc.msgbar, "TITLE", "Grey scale image ...");
+        IupSetfAttribute(gc.msgbar, "TITLE", "Binary scale image ...");
     }
     return IUP_DEFAULT;
 }
 
 int erode_cb(void)
 {
-    IupSetfAttribute(gc.msgbar, "TITLE", "Erode call back");
+    IupSetfAttribute(gc.msgbar, "TITLE", "Erode image...");
+    Image* tmp = gc.image;
+    if (tmp != NULL) {
+        gc.image = tmp->GreyCopy();
+        delete tmp;
+    }
+
     repaint_cb(gc.canvas);   /* repaint canvas */
     return IUP_DEFAULT;
 }
@@ -189,6 +195,11 @@ int erode_cb(void)
 int dilate_cb(void)
 {
     IupSetfAttribute(gc.msgbar, "TITLE", "Dilate call back");
+    Image* tmp = gc.image;
+    if (tmp != NULL) {
+        gc.image = tmp->Dilatation();
+        delete tmp;
+    }
     repaint_cb(gc.canvas);   /* repaint canvas */
     return IUP_DEFAULT;
 }
@@ -196,6 +207,11 @@ int dilate_cb(void)
 int count_cb(void)
 {
     IupSetfAttribute(gc.msgbar, "TITLE", "Count call back");
+    Image* tmp = gc.image;
+    if (tmp != NULL) {
+        gc.image = tmp->GreyCopy();
+        delete tmp;
+    }
     repaint_cb(gc.canvas);   /* repaint canvas */
     return IUP_DEFAULT;
 }

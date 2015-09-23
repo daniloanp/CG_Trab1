@@ -14,7 +14,7 @@ find_package(OpenGL REQUIRED)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 
 aux_source_directory(. SRC_LIST)
-add_executable(CG_Trab1 ${SRC_LIST})
+add_executable(CG_Trab1 ${SRC_LIST} TwoDimMatrix.cpp TwoDimMatrix.h)
 
 add_custom_command(TARGET CG_Trab1 PRE_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_directory

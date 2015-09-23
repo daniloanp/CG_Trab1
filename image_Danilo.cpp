@@ -41,6 +41,7 @@
 #include <cstdio>
 #include <cassert>
 #include <cmath>
+#include <id3/globals.h>
 
 
 #include "image_Danilo.hpp"
@@ -1046,58 +1047,110 @@ in middle position, but other elements are NOT sorted.
         return imgFinal;
     }
 
-//    Image* imgDilate(Image* img) {
-//        int w = img->width;
-//        int h = img->height;
-//
-//        Image* imgFinal = imgCopy(img);
-//        char color;
-//
-//        for (int i=0; i<w; i++){
-//            for (int j=0; j<h; j++){
-//                imgGetPixel3ubv(imgFinal, i, j, &color);
-//                if (color == 1){
-//                    if (i>0) {
-//                        && image[i-1][j]==0) image[i-1][j] = 2;
-//                    }
-//                    if (j>0 && image[i][j-1]==0) image[i][j-1] = 2;
-//                    if (i+1<w && image[i+1][j]==0) image[i+1][j] = 2;
-//                    if (j+1<h && image[i][j+1]==0) image[i][j+1] = 2;
-//                }
-//            }
-//        }
-//        for (int i=0; i<w; i++){
-//            for (int j=0; j<h; j++){
-//                if (image[i][j] == 2){
-//                    image[i][j] = 1;
-//                }
-//            }
-//        }
-//
-//        return imgFinal;
-//    }
-//
-//    int[][] dilate(int[][] image){
-//        for (int i=0; i<image.length; i++){
-//            for (int j=0; j<image[i].length; j++){
-//                if (image[i][j] == 1){
-//                    if (i>0 && image[i-1][j]==0) image[i-1][j] = 2;
-//                    if (j>0 && image[i][j-1]==0) image[i][j-1] = 2;
-//                    if (i+1<image.length && image[i+1][j]==0) image[i+1][j] = 2;
-//                    if (j+1<image[i].length && image[i][j+1]==0) image[i][j+1] = 2;
-//                }
-//            }
-//        }
-//        for (int i=0; i<image.length; i++){
-//            for (int j=0; j<image[i].length; j++){
-//                if (image[i][j] == 2){
-//                    image[i][j] = 1;
-//                }
-//            }
-//        }
-//        return image;
-//    }
 
+    Image* Image::Dilatation()
+    {
+        float cor[3];
+        float white[3] = {1, 1, 1};
+        float black[3] = {0, 0, 0};
+        int width = this->width;
+        int height = this->height;
+        int pos;
+        int x, y;
+        Image* imgFinal = this->Copy();
+
+
+        for (y = 0; y < height; y++) {
+            for (x = 0; x < width; x++) {
+                this->GetPixel3fv(x, y, cor);
+                if (cor[0] >= 0.5f) { // entra
+
+                    if (y > 0) {
+                        imgFinal->GetPixel3fv(x, y - 1, cor);
+                        if (cor[0] < 0.5f) {
+                            pos = ((y - 1) * imgFinal->width * imgFinal->dcs) + ((x) * imgFinal->dcs);
+                            imgFinal->buf[pos] = -1.0f;
+                        }
+                    }
+                    if (x > 0) {
+                        imgFinal->GetPixel3fv(x - 1, y, cor);
+                        if (cor[0] < 0.5f) {
+                            pos = ((y) * imgFinal->width * imgFinal->dcs) + ((x - 1) * imgFinal->dcs);
+                            imgFinal->buf[pos] = -1.0f;
+                        }
+                    }
+
+                    if (y + 1 < height) {
+                        imgFinal->GetPixel3fv(x, y + 1, cor);
+                        if (cor[0] < 0.5f) {
+                            pos = ((y + 1) * imgFinal->width * imgFinal->dcs) + ((x) * imgFinal->dcs);
+                            imgFinal->buf[pos] = -1.0f;
+                        }
+                    }
+                    if (x + 1 < width) {
+                        imgFinal->GetPixel3fv(x + 1, y, cor);
+                        if (cor[0] < 0.5f) {
+                            pos = ((y) * imgFinal->width * imgFinal->dcs) + ((x + 1) * imgFinal->dcs);
+                            imgFinal->buf[pos] = -1.0f;
+                        }
+                    }
+                }
+            }
+        }
+        for (y = 0; y < height; y++) {
+            for (x = 0; x < width; x++) {
+                pos = (y * imgFinal->width * imgFinal->dcs) + (x * imgFinal->dcs);
+                if (imgFinal->buf[pos] == -1.0f) {
+                    imgFinal->SetPixel3fv(x, y, white);
+                }
+            }
+        }
+
+        return imgFinal;
+    }
+
+
+    Image* Image::Erosion()
+    {
+
+//        Erosion(unsigned char IMAGE[][], int MASK[][],
+//        unsigned char FILTER[][])
+//        {
+//            int x, y, i, j, smin;
+//            for(y = 2; y <= 509; y++){
+//                for(x = 2; x <= 509; x++){
+//                    smin = 255;
+//                    for(j = -2; j <= 2; j++){
+//                        for(i = -2; i <= 2; i++){
+//                            if(MASK[i+2][j+2] == 1){
+//                                if(IMAGE[x+i][y+j] < smin)
+//                                    smin = IMAGE[x+j][y+j];
+//                            }
+//                        }
+//                        FILTER[x][y] = smin;
+//                    }
+//                }
+//            }
+//        }
+
+        int x, y, i, j, smin;
+
+        for (y = 0; y < height; y++) {
+            for (x = 0; x < width; x++) {
+                smin = 255;
+
+            }
+        }
+
+
+
+        return nullptr;
+    }
+
+    Image* Image::Count()
+    {
+        return nullptr;
+    }
 }
 
 

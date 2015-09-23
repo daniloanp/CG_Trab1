@@ -41,10 +41,12 @@ namespace image
 /************************************************************************/
 /* Tipos Exportados                                                     */
 /************************************************************************/
+
+
+    enum DimensionalSpace { RED, GREEN, BLUE };
 /**
  *   Imagem com um buffer rgb.
  */
-
     class Image
     {
     private:
@@ -202,6 +204,11 @@ namespace image
          *  @return Handle para a image de luminosidade onde o branco destaca as arestas.
          */
         Image* Edges();
+
+
+        Image* Dilatation();
+        Image* Erosion();
+        Image* Count();
     };
 
 
