@@ -36,11 +36,26 @@
 #ifndef IMAGE_H
 #define IMAGE_H
 
+#include "TwoDimMatrix.hpp"
+
+
+
 namespace image
 {
+
 /************************************************************************/
 /* Tipos Exportados                                                     */
 /************************************************************************/
+    typedef union
+    {
+        float vet[3];
+        struct {
+            float red;
+            float green;
+            float blue;
+        } rgb;
+        float luminance;
+    } Pixel;
 
 
     enum DimensionalSpace { RED, GREEN, BLUE };
@@ -50,7 +65,7 @@ namespace image
     class Image
     {
     private:
-        unsigned long BufferSize();
+        float* GetFloatBuffer(); // Get reference
 
     public:
         Image(unsigned int w, unsigned int h, unsigned int dcs);
@@ -63,7 +78,7 @@ namespace image
         /* numero de pixels na direcao horizontal da imagem */
         unsigned int height;
         /* numero de pixels na direcao vertical da imagem   */
-        float* buf;      /* vetor de dimensao dcs*width*height que armazena consecutivamente as componentes de cor */
+        TwoDimMatrix<Pixel> * buf;      /* vetor de dimensao dcs*width*height que armazena consecutivamente as componentes de cor */
         /* de cada pixel a partir do canto inferior esquerdo da imagem.  */
         /* A posicao das componentes de cor do pixel (x,y) fica armazenada */
         /* a partir da posicao: (y*width*dcs) + (x*dcs)  */
@@ -75,7 +90,6 @@ namespace image
 
         int GetDimColorSpace();
 
-        float* GetData();
 
         /**
          *	Cria uma nova nova copia imagem dada.
@@ -131,6 +145,19 @@ namespace image
          *	@return imagem criada.
          */
         static Image* ReadPFM(char* filename);
+
+
+        /************************************************************************/
+        /* Funcoes Exportadas                                                   */
+
+        /**
+             *	 Aplica o filtro de Gauss para eliminar o ruido branco
+             *  da imagem.
+             *
+             *	@param image Handle para uma imagem a ser filtrada.
+             *
+         */
+       static  Image* Gauss(Image* img_src);
 
         /**
          *	Conta o numero de cores diferentes na imagem
@@ -204,27 +231,16 @@ namespace image
          *  @return Handle para a image de luminosidade onde o branco destaca as arestas.
          */
         Image* Edges();
-
-
-        Image* Dilatation();
         Image* Erosion();
-        Image* Count();
+        Image* Dilatation();
+
+        unsigned int Count();
     };
 
 
-/************************************************************************/
-/* Funcoes Exportadas                                                   */
-
-    /**
- *	 Aplica o filtro de Gauss para eliminar o ruido branco
- *  da imagem.
- *
- *	@param image Handle para uma imagem a ser filtrada.
- *
- */
-    void imgGauss(Image* img_dst, Image* img_src);
 }
 
 
 #endif
+
 

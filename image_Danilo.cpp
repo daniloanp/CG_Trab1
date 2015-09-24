@@ -33,15 +33,17 @@
 *
 */
 
-#ifndef IMAGE_C
-#define IMAGE_C
-
 #include <cstdlib>
 #include <cstring>
 #include <cstdio>
-#include <cassert>
+
 #include <cmath>
 
+#include <bits/stl_map.h>
+#include <bits/stl_list.h>
+
+using std::map;
+using std::list;
 
 
 #include "image_Danilo.hpp"
@@ -72,8 +74,8 @@
 ***************************************************************************/
 static int getuint(unsigned short* uint, FILE* input)
 {
-    int got;
-    unsigned char temp[2];
+    int            got;
+    unsigned char  temp[2];
     unsigned short tempuint;
 
     got = (int) fread(&temp, 1, 2, input);
@@ -91,7 +93,7 @@ static int getuint(unsigned short* uint, FILE* input)
 ***************************************************************************/
 static int putuint(unsigned short uint, FILE* output)
 {
-    int put;
+    int           put;
     unsigned char temp[2];
 
     temp[0] = (unsigned char) (uint & 0xff);
@@ -108,9 +110,9 @@ static int putuint(unsigned short uint, FILE* output)
 ***************************************************************************/
 static int getlong(FILE* input, long int* longint)
 {
-    int got;
+    int           got;
     unsigned char temp[4];
-    long int templongint;
+    long int      templongint;
 
     got = (int) fread(&temp, 1, 4, input);
     if (got != 4) { return 0; }
@@ -128,7 +130,7 @@ static int getlong(FILE* input, long int* longint)
 ***************************************************************************/
 static int putlong(FILE* output, long int longint)
 {
-    int put;
+    int           put;
     unsigned char temp[4];
 
     temp[0] = (unsigned char) ((unsigned char) longint & 0xff);
@@ -148,8 +150,8 @@ static int putlong(FILE* output, long int longint)
 ***************************************************************************/
 static int getword(FILE* input, unsigned short int* word)
 {
-    int got;
-    unsigned char temp[2];
+    int                got;
+    unsigned char      temp[2];
     unsigned short int tempword;
 
     got = (int) fread(&temp, 1, 2, input);
@@ -167,7 +169,7 @@ static int getword(FILE* input, unsigned short int* word)
 ***************************************************************************/
 static int putword(FILE* output, unsigned short int word)
 {
-    int put;
+    int           put;
     unsigned char temp[2];
 
     temp[0] = (unsigned char) (word & 0xff);
@@ -184,8 +186,8 @@ static int putword(FILE* output, unsigned short int word)
 ***************************************************************************/
 static int getdword(FILE* input, unsigned long int* dword)
 {
-    int got;
-    unsigned char temp[4];
+    int               got;
+    unsigned char     temp[4];
     unsigned long int tempdword;
 
     got = (int) fread(&temp, 1, 4, input);
@@ -204,7 +206,7 @@ static int getdword(FILE* input, unsigned long int* dword)
 ***************************************************************************/
 static int putdword(FILE* output, unsigned long int dword)
 {
-    int put;
+    int           put;
     unsigned char temp[4];
 
     temp[0] = (unsigned char) (dword & 0xff);
@@ -264,15 +266,39 @@ static int comparaCor1(const void* p1, const void* p2)
 
 namespace image
 {
+    //local vectors
+    static float gauss[9]   = {
+            1.f / 16,
+            2.f / 16,
+            1.f / 16,
+            2.f / 16,
+            4.f / 16,
+            2.f / 16,
+            1.f / 16,
+            2.f / 16,
+            1.f / 16
+    };
+    static float sobel_x[9] = {-1, 0, 1, -2, 0, 2, -1, 0, 1};
+    static float sobel_y[9] = {1, 2, 1, 0, 0, 0, -1, -2, -1};
 
+    float* Image::GetFloatBuffer()
+    {
+        unsigned int _;
+        unsigned char* ref;
+        this->buf->GetDataAsByteArray(&ref, &_);
+
+        return (float*) ref;
+    }
 
 /*** Definicao das Funcoes Exportadas                                     */
     Image::Image(unsigned int width, unsigned int height, unsigned int dcs)
     {
-        this->width = width;
+
+        this->width  = width;
         this->height = height;
-        this->dcs = dcs;
-        this->buf = (float*) calloc((size_t) (width * height * dcs), sizeof(float));
+        this->dcs    = dcs;
+        this->buf    = new TwoDimMatrix<Pixel>(height, width);
+        //(float*) calloc((size_t) (width * height * dcs), sizeof(float));
         assert(this->buf);
 
     }
@@ -282,19 +308,11 @@ namespace image
         free(this->buf);
     }
 
-/************************************************************************/
-/* Definicao das Funcoes Exportadas                                     */
-/************************************************************************/
-
-    unsigned long Image::BufferSize()
-    {
-        return this->dcs * this->width * this->height * sizeof(float);
-    }
-
     Image* Image::Copy()
     {
         Image* cpy = new Image(this->width, this->height, this->dcs);
-        memcpy(cpy->buf, this->buf, this->BufferSize());
+        //memcpy(cpy->buf, this->buf, this->BufferSize());
+        cpy->buf = this->buf->Copy();
         return cpy;
     }
 
@@ -303,7 +321,7 @@ namespace image
         int w = this->width;
         int h = this->height;
         Image* img1 = new Image(w, h, 1);
-        int x, y;
+        int   x, y;
         float cor[3];
 
         for (y = 0; y < h; y++) {
@@ -321,7 +339,7 @@ namespace image
         float w0 = (float) this->width;  /* passa para float para fazer contas */
         float h0 = (float) this->height;
 
-        int x0, y0, x1, y1;
+        int   x0, y0, x1, y1;
         float color[3];
 
         for (y1 = 0; y1 < h1; y1++) {
@@ -351,59 +369,59 @@ namespace image
         return this->dcs;
     }
 
-    float* Image::GetData()
-    {
-        return this->buf;
-    }
-
 
     void Image::SetPixel3fv(int x, int y, float* color)
     {
-        int pos = (y * this->width * this->dcs) + (x * this->dcs);
+//        int pos = (y * this->width * this->dcs) + (x * this->dcs);
+        Pixel p = {0, 0, 0};
         switch (this->dcs) {
             case 3:
-                this->buf[pos] = color[0];
-                this->buf[pos + 1] = color[1];
-                this->buf[pos + 2] = color[2];
+                p.rgb.red   = color[0];
+                p.rgb.green = color[1];
+                p.rgb.blue  = color[2];
                 break;
             case 1:
-                this->buf[pos] = luminance(color[0], color[1], color[2]);
+                p.luminance = luminance(color[0], color[1], color[2]);
                 break;
             default:
                 break;
         }
+        this->buf->Set((unsigned int) y, (unsigned int) x, p);
     }
 
     void Image::SetPixel3f(int x, int y, float R, float G, float B)
     {
-        int pos = (y * this->width * this->dcs) + (x * this->dcs);
+        Pixel p = {0, 0, 0};
+
         switch (this->dcs) {
             case 3:
-                this->buf[pos] = R;
-                this->buf[pos + 1] = G;
-                this->buf[pos + 2] = B;
+                p.rgb.red   = R;
+                p.rgb.green = G;
+                p.rgb.blue  = B;
                 break;
             case 1:
-                this->buf[pos] = luminance(R, G, B);
+                p.luminance = luminance(R, G, B);
                 break;
             default:
                 break;
         }
+        this->buf->Set((unsigned int) y, (unsigned int) x, p);
     }
 
     void Image::GetPixel3fv(int x, int y, float* color)
     {
-        int pos = (y * this->width * this->dcs) + (x * this->dcs);
+        Pixel p = this->buf->Get((unsigned int) y, (unsigned int) x);
+
         switch (this->dcs) {
             case 3:
-                color[0] = this->buf[pos];
-                color[1] = this->buf[pos + 1];
-                color[2] = this->buf[pos + 2];
+                color[0] = p.rgb.red;
+                color[1] = p.rgb.green;
+                color[2] = p.rgb.blue;
                 break;
             case 1:
-                color[0] = this->buf[pos];
-                color[1] = color[0];
-                color[2] = color[0];
+                color[0] = p.luminance;
+                color[1] = p.luminance;
+                color[2] = p.luminance;
                 break;
             default:
                 break;
@@ -413,15 +431,16 @@ namespace image
 
     void Image::GetPixel3f(int x, int y, float* R, float* G, float* B)
     {
-        int pos = (y * this->width * this->dcs) + (x * this->dcs);
+        Pixel p = this->buf->Get((unsigned int) y, (unsigned int) x);
+        //int pos = (y * this->width * this->dcs) + (x * this->dcs);
         switch (this->dcs) {
             case 3:
-                *R = this->buf[pos];
-                *G = this->buf[pos + 1];
-                *B = this->buf[pos + 2];
+                *R = p.rgb.red;
+                *G = p.rgb.green;
+                *B = p.rgb.blue;
                 break;
             case 1:
-                *R = this->buf[pos];
+                *R = p.luminance;
                 *G = *R;
                 *B = *R;
                 break;
@@ -432,71 +451,72 @@ namespace image
 
     void Image::SetPixel3ubv(int x, int y, unsigned char* color)
     {
-        int pos = (y * this->width * this->dcs) + (x * this->dcs);
+        Pixel p = {0, 0, 0};
+
         switch (this->dcs) {
             case 3:
-                this->buf[pos] = (float) (color[0] / 255.);
-                this->buf[pos + 1] = (float) (color[1] / 255.);
-                this->buf[pos + 2] = (float) (color[2] / 255.);
+                p.rgb.red   = (float) (color[0] / 255.);
+                p.rgb.green = (float) (color[1] / 255.);
+                p.rgb.blue  = (float) (color[2] / 255.);
                 break;
             case 1:
-                this->buf[pos] = luminance((float) (color[0] / 255.), (float) (color[1] / 255.),
-                                           (float) (color[2] / 255.));
+                p.luminance = luminance((float) (color[0] / 255.), (float) (color[1] / 255.),
+                                        (float) (color[2] / 255.));
                 break;
             default:
                 break;
         }
+        this->buf->Set((unsigned int) y, (unsigned int) x, p);
     }
 
     void Image::GetPixel3ubv(int x, int y, unsigned char* color)
     {
-        int pos = (y * this->width * this->dcs) + (x * this->dcs);
-        int r, g, b;
+        Pixel p = this->buf->Get((unsigned int) y, (unsigned int) x);
+
+        int r = 0, g = 0, b = 0;
         switch (this->dcs) {
             case 3:
-                r = ROUND(255 * this->buf[pos]);
-                g = ROUND (255 * this->buf[pos + 1]);
-                b = ROUND (255 * this->buf[pos + 2]);
-                color[0] = (unsigned char) ((unsigned char) (r < 256) ? r : 255);
-                color[1] = (unsigned char) ((unsigned char) (g < 256) ? g : 255);
-                color[2] = (unsigned char) ((unsigned char) (b < 256) ? b : 255);
+                r = ROUND(255 * p.rgb.red);
+                g = ROUND (255 * p.rgb.green);
+                b = ROUND (255 * p.rgb.blue);
+
                 break;
             case 1:
-                r = g = b = ROUND(255 * this->buf[pos]);
-                color[0] = (unsigned char) ((unsigned char) (r < 256) ? r : 255);
-                color[1] = (unsigned char) ((unsigned char) (g < 256) ? g : 255);
-                color[2] = (unsigned char) ((unsigned char) (b < 256) ? b : 255);
+                r = g = b = ROUND(255 * p.luminance);
                 break;
             default:
                 break;
         }
+        color[0] = (unsigned char) ((unsigned char) (r < 256) ? r : 255);
+        color[1] = (unsigned char) ((unsigned char) (g < 256) ? g : 255);
+        color[2] = (unsigned char) ((unsigned char) (b < 256) ? b : 255);
     }
 
 
 /* Compiler dependent definitions */
-    typedef unsigned char BYTE;
+    typedef unsigned char      BYTE;
     typedef unsigned short int USHORT;
     typedef unsigned short int WORD;
-    typedef long int LONG;
-    typedef unsigned long int DWORD;
+    typedef long int           LONG;
+    typedef unsigned long int  DWORD;
 
 
     Image* Image::ReadBMP(const char* filename)
     {
-        FILE* filePtr;            /* ponteiro do arquivo */
+        FILE * filePtr;            /* ponteiro do arquivo */
         Image* image;            /* imagem a ser criada */
-        BYTE* linedata;
+        BYTE * linedata;
 
         USHORT bfType;             /* "BM" = 19788           */
-        LONG biWidth;            /* image width in pixels  */
-        LONG biHeight;           /* image height in pixels */
-        WORD biBitCount;         /* bitmap color depth     */
-        DWORD bfSize;
+        LONG   biWidth;            /* image width in pixels  */
+        LONG   biHeight;           /* image height in pixels */
+        WORD   biBitCount;         /* bitmap color depth     */
+        DWORD  bfSize;
 
         USHORT ushortSkip;         /* dado lixo USHORT */
-        DWORD dwordSkip;         /* dado lixo DWORD  */
-        LONG longSkip;         /* dado lixo LONG   */
-        WORD wordSkip;         /* dado lixo WORD   */
+        DWORD  dwordSkip;         /* dado lixo DWORD  */
+        LONG   longSkip;         /* dado lixo LONG   */
+        WORD   wordSkip;         /* dado lixo WORD   */
 
         LONG i, j, k, l, linesize, got;
 
@@ -565,6 +585,7 @@ namespace image
         }
 
         /* pega as componentes de cada pixel */
+        printf("\n\nteste: %d, %d", image->height, image->width);
         for (k = 0, i = 0; i < image->height; i++) {
             got = (unsigned long int) fread(linedata, linesize, 1, filePtr);
             if (got != 1) {
@@ -572,9 +593,8 @@ namespace image
                 fprintf(stderr, "get24bits: Unexpected end of file.\n");
             }
             for (l = 1, j = 0; j < image->width; j++, l = l + 3) {
-                image->buf[k++] = (float) (linedata[l + 1] / 255.);
-                image->buf[k++] = (float) (linedata[l] / 255.);
-                image->buf[k++] = (float) (linedata[l - 1] / 255.);
+                Pixel p = {linedata[l + 1] / 255.0f, linedata[l] / 255.0f, linedata[l - 1] / 255.0f};
+                image->buf->Set(i, j, p);
             }
         }
 
@@ -585,10 +605,10 @@ namespace image
 
     int Image::WriteBMP(char* filename)
     {
-        FILE* filePtr;         /* ponteiro do arquivo */
+        FILE         * filePtr;         /* ponteiro do arquivo */
         unsigned char* filedata;
         DWORD bfSize;
-        int i, k, l;
+        int   i, k, l;
 
         int linesize, put;
 
@@ -639,17 +659,17 @@ namespace image
         }
 
         for (k = 0; k < this->height; k++) {
-            l = 1;
+            l      = 1;
             /* coloca as componentes BGR no buffer */
             for (i = 0; i < this->width; i++) {
                 unsigned char color[3];
-                int r, g, b;
+                int           r, g, b;
                 this->GetPixel3ubv(i, k, color);
                 r = color[0];
                 g = color[1];
                 b = color[2];
                 filedata[l - 1] = (unsigned char) ((unsigned char) (b < 256) ? b : 255);
-                filedata[l] = (unsigned char) ((unsigned char) (g < 256) ? g : 255);
+                filedata[l]     = (unsigned char) ((unsigned char) (g < 256) ? g : 255);
                 filedata[l + 1] = (unsigned char) ((unsigned char) (r < 256) ? r : 255);
                 l += 3;
             }
@@ -675,10 +695,10 @@ namespace image
 
     Image* Image::ReadPFM(char* filename)
     {
-        FILE* fp;
+        FILE * fp;
         Image* img;
         float scale;
-        int w, h;
+        int   w, h;
 
         char line[256];
 
@@ -739,19 +759,26 @@ namespace image
     {
 
         int numCor = 1;
-        int width = this->width;
+        int width  = this->width;
         int height = this->height;
-        int dcs = this->dcs;
-        float* buf = this->buf;
-        int* vet = (int*) malloc(3 * width * height * sizeof(int));
+        int dcs    = this->dcs;
+        TwoDimMatrix<Pixel>* buf = this->buf;
+        int                * vet = (int*) calloc(3 * width * height, sizeof(int));
         int i;
 
 
         /* copia o buffer da imagem no vetor de floats fazendo
          uma quantizacao para (1/tol) tons de cada componente de cor */
-        for (i = 0; i < dcs * width * height; i++) {
-            vet[i] = (int) (buf[i] / tol + 0.5);
+        i = 0;
+        for (int y; y < height; y++) {
+            for (int x; x < height; x++) {
+                Pixel p = buf->Get(y, x);
+                vet[i++] = (int) (p.rgb.red / tol + 0.5);
+                vet[i++] = (int) (p.rgb.green / tol + 0.5);
+                vet[i++] = (int) (p.rgb.blue / tol + 0.5);
+            }
         }
+
 
         /* ordena o vetor */
         if (dcs == 3) {
@@ -805,65 +832,6 @@ namespace image
                  c[4] * v[4 * 3 + 2] + c[5] * v[5 * 3 + 2] + c[6] * v[6 * 3 + 2] + c[7] * v[7 * 3 + 2] +
                  c[8] * v[8 * 3 + 2];
         return 0; //NOTE:Was missing
-    }
-
-    //local vectors
-    static float gauss[9] = {1.f / 16, 2.f / 16, 1.f / 16, 2.f / 16, 4.f / 16, 2.f / 16, 1.f / 16, 2.f / 16, 1.f / 16};
-    static float sobel_x[9] = {-1, 0, 1, -2, 0, 2, -1, 0, 1};
-    static float sobel_y[9] = {1, 2, 1, 0, 0, 0, -1, -2, -1};
-
-
-    void imgGauss(Image* img_dst, Image* img_src)
-    {
-        int w = img_dst->GetWidth();
-        int h = img_dst->GetHeight();
-        int dcs = img_dst->GetDimColorSpace();
-
-        float* src_buffer = img_src->GetData();
-        float* dst_buffer = img_src->GetData();
-        int x, y;
-
-
-        if (dcs == 1) {
-            for (y = 1; y < h - 1; y++) {
-                for (x = 1; x < w - 1; x++) {
-                    int k = y * w + x;
-                    float v[9] = {
-                            src_buffer[k + w - 1], src_buffer[k + w], src_buffer[k + w + 1],
-                            src_buffer[k - 1], src_buffer[k], src_buffer[k + 1],
-                            src_buffer[k - w - 1], src_buffer[k - w], src_buffer[k - w + 1]
-                    };
-                    dst_buffer[k] = apply(gauss, v);
-                }
-            }
-        } else {
-            for (y = 1; y < h - 1; y += 1) {
-                for (x = 1; x < w - 1; x += 1) {
-                    int k0 = y * w * 3 + x * 3;
-                    int k1 = k0 + 1;
-                    int k2 = k0 + 2;
-                    float r[9] = {
-                            src_buffer[k0 + 3 * w - 3], src_buffer[k0 + 3 * w], src_buffer[k0 + 3 * w + 3],
-                            src_buffer[k0 - 3], src_buffer[k0], src_buffer[k0 + 3],
-                            src_buffer[k0 - 3 * w - 3], src_buffer[k0 - 3 * w], src_buffer[k0 - 3 * w + 3]
-                    };
-                    float g[9] = {
-                            src_buffer[k1 + 3 * w - 3], src_buffer[k1 + 3 * w], src_buffer[k1 + 3 * w + 3],
-                            src_buffer[k1 - 3], src_buffer[k1], src_buffer[k1 + 3],
-                            src_buffer[k1 - 3 * w - 3], src_buffer[k1 - 3 * w], src_buffer[k1 - 3 * w + 3]
-                    };
-                    float b[9] = {
-                            src_buffer[k2 + 3 * w - 3], src_buffer[k2 + 3 * w], src_buffer[k2 + 3 * w + 3],
-                            src_buffer[k2 - 3], src_buffer[k2], src_buffer[k2 + 3],
-                            src_buffer[k2 - 3 * w - 3], src_buffer[k2 - 3 * w], src_buffer[k2 - 3 * w + 3]
-                    };
-
-                    dst_buffer[k0] = apply(gauss, r);
-                    dst_buffer[k1] = apply(gauss, g);
-                    dst_buffer[k2] = apply(gauss, b);
-                }
-            }
-        }
     }
 
 
@@ -922,18 +890,18 @@ in middle position, but other elements are NOT sorted.
 
     void Image::Median()
     {
-        int w = this->width;
-        int h = this->height;
+        int w   = this->width;
+        int h   = this->height;
         int dcs = this->dcs;
-        Image* img = this->Copy();
-        float* image_buf = this->buf;
-        float* img_buf = this->buf;
+        Image* img       = this->Copy();
+        float* image_buf = this->GetFloatBuffer();
+        float* img_buf   = this->GetFloatBuffer();
         int x, y;
 
         if (dcs == 1) {
             for (y = 1; y < h - 1; y++) {
                 for (x = 1; x < w - 1; x++) {
-                    int k = y * w + x;
+                    int   k    = y * w + x;
                     float v[9] = {
                             img_buf[k + w - 1], img_buf[k + w], img_buf[k + w + 1],
                             img_buf[k - 1], img_buf[k], img_buf[k + 1],
@@ -945,9 +913,9 @@ in middle position, but other elements are NOT sorted.
         } else {
             for (y = 1; y < h - 1; y += 1) {
                 for (x = 1; x < w - 1; x += 1) {
-                    int k0 = y * w * 3 + x * 3;
-                    int k1 = k0 + 1;
-                    int k2 = k0 + 2;
+                    int   k0   = y * w * 3 + x * 3;
+                    int   k1   = k0 + 1;
+                    int   k2   = k0 + 2;
                     float r[9] = {
                             img_buf[k0 + 3 * w - 3], img_buf[k0 + 3 * w], img_buf[k0 + 3 * w + 3],
                             img_buf[k0 - 3], img_buf[k0], img_buf[k0 + 3],
@@ -974,15 +942,15 @@ in middle position, but other elements are NOT sorted.
 
     Image* Image::Edges()
     {
-        int width = this->width;
+        int width  = this->width;
         int height = this->height;
-        int dcs = this->GetDimColorSpace();
+        int dcs    = this->GetDimColorSpace();
         Image* imgOut = new Image(width, height, 1);
         int x, y;
         Image* img;
         float max = 0, inv;
 
-        float* imgOut_buf = imgOut->GetData();
+        float* imgOut_buf = imgOut->GetFloatBuffer();
 
         float* img_buf;
         if (dcs == 1) {
@@ -990,25 +958,25 @@ in middle position, but other elements are NOT sorted.
         } else {
             img = img->GreyCopy();
         }
-        img_buf = img->GetData();
+        img_buf           = img->GetFloatBuffer();
 
         for (y = 1; y < height - 1; y++) {
             for (x = 1; x < width - 1; x++) {
-                int k = y * width + x;
+                int   k    = y * width + x;
                 float v[9] = {
                         img_buf[k + width - 1], img_buf[k + width], img_buf[k + width + 1],
                         img_buf[k - 1], img_buf[k], img_buf[k + 1],
                         img_buf[k - width - 1], img_buf[k - width], img_buf[k - width + 1]
                 };
-                float dx = apply(sobel_x, v);
-                float dy = apply(sobel_y, v);
-                float val = (float) sqrt(dx * dx + dy * dy);
+                float dx   = apply(sobel_x, v);
+                float dy   = apply(sobel_y, v);
+                float val  = (float) sqrt(dx * dx + dy * dy);
                 max = (max > val) ? max : val;
                 imgOut_buf[k] = val;
             }
         }
 
-        inv = (max == 0) ? 1.f : 1.f / max;
+        inv    = (max == 0) ? 1.f : 1.f / max;
         /* arruma a imagem */
         for (y = 0; y < height; y++) {
             for (x = 0; x < width; x++) {
@@ -1026,13 +994,13 @@ in middle position, but other elements are NOT sorted.
 
     Image* Image::Binary()
     {
-        int width = this->width;
+        int width  = this->width;
         int height = this->height;
         Image* imgFinal = new Image(width, height, 1);
         float white[3] = {1, 1, 1};
         float black[3] = {0, 0, 0};
         float cor[3];
-        int x, y;
+        int   x, y;
 
         for (y = 0; y < height; y++) {
             for (x = 0; x < width; x++) {
@@ -1050,48 +1018,49 @@ in middle position, but other elements are NOT sorted.
 
     Image* Image::Dilatation()
     {
-        float cor[3];
-        float white[3] = {1, 1, 1};
-        float black[3] = {0, 0, 0};
-        int width = this->width;
-        int height = this->height;
-        int dcs = this->dcs;
-        int pos;
-        int x, y;
+
+        unsigned int width  = this->width;
+        unsigned int height = this->height;
+        int          dcs    = this->dcs;
+        int          pos;
+        unsigned int x, y;
+        TwoDimMatrix<Pixel>* buffer = this->buf;
+        Pixel p;
+
+
         Image* imgFinal = this->Copy();
 
 
         for (y = 0; y < height; y++) {
             for (x = 0; x < width; x++) {
-                this->GetPixel3fv(x, y, cor);
-                if (cor[0] >= 0.5f) { // entra
+                p = buffer->Get(y, x);
+
+                if (p.luminance >= 0.5f) { // entra
                     if (y > 0) {
-                        imgFinal->GetPixel3fv(x, y - 1, cor);
-                        if (cor[0] < 0.5f && cor[0] >=0  ) {
-                            pos = ((y - 1) * width * dcs) + ((x) * dcs);
-                            imgFinal->buf[pos] = -1.0f;
+                        p = buffer->Get(y - 1, x);
+                        if (p.luminance >= 0 && p.luminance < 0.5f) {
+                            imgFinal->buf->Set(y - 1, x, (Pixel) {-1.0f, -1.0f, -1.0f});
+
                         }
                     }
                     if (x > 0) {
-                        imgFinal->GetPixel3fv(x - 1, y, cor);
-                        if (cor[0] < 0.5f && cor[0] >=0 ) {
-                            pos = ((y) * width * dcs) + ((x - 1) * dcs);
-                            imgFinal->buf[pos] = -1.0f;
+                        p = buffer->Get(y, x - 1);
+                        if (p.luminance >= 0 && p.luminance < 0.5f) {
+                            imgFinal->buf->Set(y, x - 1, (Pixel) {-1.0f, -1.0f, -1.0f});
+
                         }
                     }
 
                     if (y + 1 < height) {
-                        imgFinal->GetPixel3fv(x, y + 1, cor);
-                        if (cor[0] < 0.5f && cor[0] >=0 ) {
-                            pos = ((y + 1) * width * dcs) + ((x) * dcs);
-                            imgFinal->buf[pos] = -1.0f;
+                        p = buffer->Get(y + 1, x);
+                        if (p.luminance >= 0 && p.luminance < 0.5f) {
+                            imgFinal->buf->Set(y + 1, x, (Pixel) {-1.0f, -1.0f, -1.0f});
                         }
                     }
                     if (x + 1 < width) {
-                        imgFinal->GetPixel3fv(x + 1, y, cor);
-                        if (cor[0] < 0.5f && cor[0] >=0 ) {
-                            pos = ((y) * width * dcs) + ((x + 1) * dcs);
-                            imgFinal->buf[pos] = -1.0f;
+                        p = buffer->Get(y, x + 1);
+                        if (p.luminance >= 0 && p.luminance < 0.5f) {
+                            imgFinal->buf->Set(y, x + 1, (Pixel) {-1.0f, -1.0f, -1.0f});
                         }
                     }
                 }
@@ -1099,9 +1068,9 @@ in middle position, but other elements are NOT sorted.
         }
         for (y = 0; y < height; y++) {
             for (x = 0; x < width; x++) {
-                pos = (y * width * dcs) + (x * dcs);
-                if (imgFinal->buf[pos] == -1.0f) {
-                    imgFinal->SetPixel3fv(x, y, white);
+
+                if (imgFinal->buf->Get(y, x).luminance == -1.0f) {
+                    imgFinal->buf->Set(y, x, {1, 1, 1});
                 }
             }
         }
@@ -1112,59 +1081,58 @@ in middle position, but other elements are NOT sorted.
 
     Image* Image::Erosion()
     {
-        float cor[3];
-        float white[3] = {1, 1, 1};
-        float black[3] = {0, 0, 0};
-        int width = this->width;
-        int height = this->height;
-        int dcs = this->dcs;
-        int pos, x, y;
+        unsigned int width  = this->width;
+        unsigned int height = this->height;
+        int          dcs    = this->dcs;
+        int          pos;
+        unsigned int x, y;
+        TwoDimMatrix<Pixel>* buffer = this->buf;
+        Pixel p;
+
         Image* imgFinal = this->Copy();
 
 
         for (y = 0; y < height; y++) {
             for (x = 0; x < width; x++) {
-                pos = ((y) * width * dcs) + ((x) * dcs);
-                this->GetPixel3fv(x, y, cor);
-                if (imgFinal->buf[pos] >= 0 && cor[0] < 0.5f) { // entra
+                p = buffer->Get(y, x);
 
+                if (p.luminance < 0.5f) { // entra
                     if (y > 0) {
-                        imgFinal->GetPixel3fv(x, y - 1, cor);
-                        if (cor[0] >= 0.5f) {
-                            pos = ((y - 1) * width * dcs) + ((x) * dcs);
-                            imgFinal->buf[pos] = -1.0f;
+                        p = buffer->Get(y - 1, x);
+                        if (p.luminance >= 0.5f) {
+                            imgFinal->buf->Set(y - 1, x, (Pixel) {-1.0f, -1.0f, -1.0f});
+
                         }
                     }
                     if (x > 0) {
-                        imgFinal->GetPixel3fv(x - 1, y, cor);
-                        if (cor[0] >= 0.5f) {
-                            pos = ((y) * width * dcs) + ((x - 1) * dcs);
-                            imgFinal->buf[pos] = -1.0f;
+                        p = buffer->Get(y, x - 1);
+                        if (p.luminance >= 0.5f) {
+                            imgFinal->buf->Set(y, x - 1, (Pixel) {-1.0f, -1.0f, -1.0f});
+
                         }
                     }
 
                     if (y + 1 < height) {
-                        imgFinal->GetPixel3fv(x, y + 1, cor);
-                        if (cor[0] >= 0.5f) {
-                            pos = ((y + 1) * width * dcs) + ((x) * dcs);
-                            imgFinal->buf[pos] = -1.0f;
+                        p = buffer->Get(y + 1, x);
+                        if (p.luminance >= 0.5f) {
+                            imgFinal->buf->Set(y + 1, x, (Pixel) {-1.0f, -1.0f, -1.0f});
                         }
                     }
                     if (x + 1 < width) {
-                        imgFinal->GetPixel3fv(x + 1, y, cor);
-                        if (cor[0] >= 0.5f) {
-                            pos = ((y) * width * dcs) + ((x + 1) * dcs);
-                            imgFinal->buf[pos] = -1.0f;
+                        p = buffer->Get(y, x + 1);
+                        if (p.luminance >= 0.5f) {
+                            imgFinal->buf->Set(y, x + 1, (Pixel) {-1.0f, -1.0f, -1.0f});
                         }
                     }
                 }
             }
         }
+
         for (y = 0; y < height; y++) {
             for (x = 0; x < width; x++) {
-                pos = (y * width * dcs) + (x * dcs);
-                if (imgFinal->buf[pos] == -1.0f) {
-                    imgFinal->SetPixel3fv(x, y, black);
+
+                if (imgFinal->buf->Get(y, x).luminance == -1.0f) {
+                    imgFinal->buf->Set(y, x, {0, 0, 0});
                 }
             }
         }
@@ -1172,36 +1140,183 @@ in middle position, but other elements are NOT sorted.
         return imgFinal;
     }
 
-    Image* Image::Count()
+
+    unsigned int Image::Count()
     {
-        
+        //assuming binary
+        unsigned int width      = this->width;
+        unsigned int height     = this->height;
+        int          dcs        = this->dcs;
+        int          pos;
+        unsigned int x, y;
+        int          last_label = 1;
+        TwoDimMatrix<int>* labels = new TwoDimMatrix<int>(this->height, this->width);
+        TwoDimMatrix<Pixel>* buffer = this->buf;
+        map<int, int>  eqTable;
+        Pixel p;
 
-        return nullptr;
+
+        Image* imgFinal = this->Binary();
+
+
+        //First Step
+        for (y = 0; y < height; y++) {
+            for (x = 0; x < width; x++) {
+                p = buffer->Get(y, x);
+                if (p.luminance >= 0.5f) { //not background
+                    int label    = 0;
+                    int tmpLabel = 0;
+                    if (x > 0 && y > 0) {
+                        tmpLabel = labels->Get(y - 1, x - 1);
+                        if (tmpLabel > 0) {
+                            if (label > tmpLabel) {
+                                label = tmpLabel;
+                            }
+                        }
+                    }
+
+                    if (y > 0) {
+                        tmpLabel = labels->Get(y - 1, x);
+                        if (tmpLabel > 0) {
+                            if (!label || label > tmpLabel) {
+                                if (label > 0) {
+                                    eqTable[label] = tmpLabel;
+                                }
+                                label = tmpLabel;
+                            }
+                        }
+                    }
+
+                    if (y > 0 && x + 1 < width) {
+                        tmpLabel = labels->Get(y - 1, x + 1);
+                        if (tmpLabel > 0) {
+                            if (!label || label > tmpLabel) {
+                                if (label > 0) {
+                                    eqTable[label] = tmpLabel;
+                                }
+                                label = tmpLabel;
+                            }
+                        }
+
+
+
+                    }
+                    if (x > 0) {
+                        tmpLabel = labels->Get(y, x) - 1;
+                        if (tmpLabel > 0) {
+                            if (!label || label > tmpLabel) {
+                                if (label > 0) {
+                                    eqTable[label] = tmpLabel;
+                                }
+                                label = tmpLabel;
+                            }
+                        }
+
+
+                    }
+                    // no previous
+                    if (label == 0) {
+                        label =  last_label;
+                        eqTable[label] = label;
+                        last_label += 1;
+                    }
+
+                    labels->Set(y, x, label);
+                } else {
+                    labels->Set(y, x, 0);
+                }
+            }
+        }
+        int count;
+
+//        int count = 0;
+//        map<int, int>::iterator it;
+//        for (it = eqTable.begin(); it != eqTable.end(); it++ ) {
+//
+//        }
+
+//
+//        //First Step
+//        for (y = 0; y < height; y++) {
+//            for (x = 0; x < width; x++) {
+//                int label = 0;
+//                do {
+//                    int label = labels->Get(y, x);
+//                } while(label && eqTable[label] != label);
+//
+//                while
+//            }
+//        }
+
+        // two
+//        for row in data
+//        for column in row
+//        if data[row][column] is not Background
+//        labels[row][column] = find(labels[row][column])
+
+
+        return count;
     }
+
+    Image* Image::Gauss(Image* img_src)
+    {
+        Image* img_dst = new Image(img_src->width, img_src->height, img_src->dcs);
+        int w   = img_dst->GetWidth();
+        int h   = img_dst->GetHeight();
+        int dcs = img_dst->GetDimColorSpace();
+
+        float* src_buffer = img_src->GetFloatBuffer();
+        float* dst_buffer = img_dst->GetFloatBuffer();
+        int x, y;
+
+        if (dcs == 1) {
+            for (y = 1; y < h - 1; y++) {
+                for (x = 1; x < w - 1; x++) {
+                    int   k    = y * w + x;
+                    float v[9] = {
+                            src_buffer[k + w - 1], src_buffer[k + w], src_buffer[k + w + 1],
+                            src_buffer[k - 1], src_buffer[k], src_buffer[k + 1],
+                            src_buffer[k - w - 1], src_buffer[k - w], src_buffer[k - w + 1]
+                    };
+                    dst_buffer[k] = apply(gauss, v);
+                }
+            }
+        } else {
+            for (y = 1; y < h - 1; y += 1) {
+                for (x = 1; x < w - 1; x += 1) {
+                    int   k0   = y * w * 3 + x * 3;
+                    int   k1   = k0 + 1;
+                    int   k2   = k0 + 2;
+                    float r[9] = {
+                            src_buffer[k0 + 3 * w - 3], src_buffer[k0 + 3 * w], src_buffer[k0 + 3 * w + 3],
+                            src_buffer[k0 - 3], src_buffer[k0], src_buffer[k0 + 3],
+                            src_buffer[k0 - 3 * w - 3], src_buffer[k0 - 3 * w], src_buffer[k0 - 3 * w + 3]
+                    };
+                    float g[9] = {
+                            src_buffer[k1 + 3 * w - 3], src_buffer[k1 + 3 * w], src_buffer[k1 + 3 * w + 3],
+                            src_buffer[k1 - 3], src_buffer[k1], src_buffer[k1 + 3],
+                            src_buffer[k1 - 3 * w - 3], src_buffer[k1 - 3 * w], src_buffer[k1 - 3 * w + 3]
+                    };
+                    float b[9] = {
+                            src_buffer[k2 + 3 * w - 3], src_buffer[k2 + 3 * w], src_buffer[k2 + 3 * w + 3],
+                            src_buffer[k2 - 3], src_buffer[k2], src_buffer[k2 + 3],
+                            src_buffer[k2 - 3 * w - 3], src_buffer[k2 - 3 * w], src_buffer[k2 - 3 * w + 3]
+                    };
+
+                    dst_buffer[k0] = apply(gauss, r);
+                    dst_buffer[k1] = apply(gauss, g);
+                    dst_buffer[k2] = apply(gauss, b);
+                }
+            }
+        }
+
+        return img_dst;
+
+
+    }
+
+
 }
 
-
-#endif
-
-
-
-
-
-
-
-/*
- *
- *
- *
- * smin = 255;
-for(j = -2; j <= 2; j++){
-for(i = -2; i <= 2; i++){
-if(MASK[i+2][j+2] == 1){
-if(IMAGE[x+i][y+j] < smin)
-smin = IMAGE[x+j][y+j];
-}
-}
-    FILTER[x][y] = smin;
-}
- *
- */
+template
+class image::TwoDimMatrix<image::Pixel>;
