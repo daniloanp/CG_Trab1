@@ -206,12 +206,19 @@ int dilate_cb(void)
 
 int count_cb(void)
 {
-    IupSetfAttribute(gc.msgbar, "TITLE", "Count call back");
+    IupSetfAttribute(gc.msgbar, "TITLE", "Counting...");
     Image* tmp = gc.image;
+    int count = 0;
     if (tmp != NULL) {
-        gc.image = tmp->GreyCopy();
+        gc.image = tmp->Binary();
         delete tmp;
+        count = gc.image->Count();
+        if (count > 0) {
+            string c = "Components: " + std::to_string(count);
+            IupSetfAttribute(gc.msgbar, "TITLE", c.c_str());
+        }
     }
+
     repaint_cb(gc.canvas);   /* repaint canvas */
     return IUP_DEFAULT;
 }
@@ -243,7 +250,7 @@ Ihandle* InitToolbar(void)
                                  (Icallback) binary_cb);
     Ihandle* erode = IupSButton("img/erode.bmp", "Write your tip here...", (Icallback) erode_cb);
     Ihandle* dilate = IupSButton("img/dilate.bmp", "Write your tip here...", (Icallback) dilate_cb);
-    Ihandle* count = IupSButton("img/count.bmp", "Write your tip here...", (Icallback) count_cb);
+    Ihandle* count = IupSButton("img/count.bmp", "Count...", (Icallback) count_cb);
     Ihandle* save = IupSButton("img/file_save.bmp", "save image in a BMP file", (Icallback) save_cb);
 
     toolbar = IupHbox(load, binary, erode, dilate, count, save, NULL);

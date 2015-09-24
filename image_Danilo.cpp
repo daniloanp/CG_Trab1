@@ -37,13 +37,15 @@
 #include <cstring>
 #include <cstdio>
 
+
 #include <cmath>
 
-#include <bits/stl_map.h>
-#include <bits/stl_list.h>
+#include <utility>
+#include <map>
+
 
 using std::map;
-using std::list;
+
 
 
 #include "image_Danilo.hpp"
@@ -1202,7 +1204,7 @@ in middle position, but other elements are NOT sorted.
 
                     }
                     if (x > 0) {
-                        tmpLabel = labels->Get(y, x) - 1;
+                        tmpLabel = labels->Get(y, x -1);
                         if (tmpLabel > 0) {
                             if (!label || label > tmpLabel) {
                                 if (label > 0) {
@@ -1227,35 +1229,17 @@ in middle position, but other elements are NOT sorted.
                 }
             }
         }
-        int count;
-
-//        int count = 0;
-//        map<int, int>::iterator it;
-//        for (it = eqTable.begin(); it != eqTable.end(); it++ ) {
-//
-//        }
-
-//
-//        //First Step
-//        for (y = 0; y < height; y++) {
-//            for (x = 0; x < width; x++) {
-//                int label = 0;
-//                do {
-//                    int label = labels->Get(y, x);
-//                } while(label && eqTable[label] != label);
-//
-//                while
-//            }
-//        }
-
-        // two
-//        for row in data
-//        for column in row
-//        if data[row][column] is not Background
-//        labels[row][column] = find(labels[row][column])
 
 
-        return count;
+        int count = 0;
+        map<int, int>::iterator it;
+        for (it = eqTable.begin(); it != eqTable.end(); it++ ) {
+            if (it->first == it->second) {
+                count ++;
+            }
+        }
+
+        return (unsigned int) count;
     }
 
     Image* Image::Gauss(Image* img_src)
