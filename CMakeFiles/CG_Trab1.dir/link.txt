@@ -1,1 +1,0 @@
-/usr/sbin/c++    -std=c++11   CMakeFiles/CG_Trab1.dir/iups_Danilo.cpp.o CMakeFiles/CG_Trab1.dir/main_Danilo.cpp.o CMakeFiles/CG_Trab1.dir/image_Danilo.cpp.o  -o CG_Trab1 -rdynamic -liupgl -liup /usr/lib64/libGL.so /usr/lib64/libGLU.so 
